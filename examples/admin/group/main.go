@@ -28,16 +28,19 @@ import (
 
 func main() {
 	//clusterName := "DefaultCluster"
-	nameSrvAddr := []string{"127.0.0.1:9876"}
+	nameSrvAddr := []string{"10.10.88.152:9876"}
 	brokerAddr := "127.0.0.1:10911"
 
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{
-			AccessKey: "RocketMQ",
-			SecretKey: "12345678",
+			AccessKey: "rocketAdmin",
+			SecretKey: "DX01PFQTH748KMS4LW6OMMTJ4EUY",
 		}),
 	)
+	res, _ := testAdmin.FetchClusterListInfo(context.Background())
+
+	fmt.Println(res)
 
 	// group list
 	result, err := testAdmin.GetAllSubscriptionGroup(context.Background(), brokerAddr, 3*time.Second)

@@ -86,3 +86,14 @@ type SubscriptionGroupConfig struct {
 	WhichBrokerWhenConsumeSlowly   int
 	NotifyConsumerIdsChangedEnable bool
 }
+
+type BrokerAddrTable struct {
+	BrokerAddrs map[string]string `json:"brokerAddrs"`
+	BrokerName  string            `json:"brokerName"`
+	Cluster     string            `json:"cluster"`
+}
+
+type ClusterListInfo struct {
+	BrokerAddrTable  map[string]BrokerAddrTable `json:"brokerAddrTable"`
+	ClusterAddrTable map[string][]string        `json:"clusterAddrTable"`
+}

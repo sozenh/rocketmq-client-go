@@ -19,6 +19,7 @@ package admin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -37,6 +38,7 @@ type Admin interface {
 	GetAllSubscriptionGroup(ctx context.Context, brokerAddr string, timeoutMillis time.Duration) (*SubscriptionGroupWrapper, error)
 	FetchAllTopicList(ctx context.Context) (*TopicList, error)
 	//GetBrokerClusterInfo(ctx context.Context) (*remote.RemotingCommand, error)
+	FetchClusterListInfo(ctx context.Context) (*ClusterListInfo, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
 	Close() error
 }
@@ -158,6 +160,22 @@ func (a *admin) FetchAllTopicList(ctx context.Context) (*TopicList, error) {
 		return nil, err
 	}
 	return &topicList, nil
+}
+
+func (a *admin) FetchClusterListInfo(ctx context.Context) (clusterListInfo *ClusterListInfo, err error) {
+	clusterListInfo = new(ClusterListInfo)
+	cmd := remote.NewRemotingCommand(internal.ReqGetBrokerClusterInfo, nil, nil)
+	response, err := a.cli.InvokeSync(ctx, a.cli.GetNameSrv().AddrList()[0], cmd, 3*time.Second)
+	if err != nil {
+		rlog.Error("Fetch all cluster list error", map[string]interface{}{
+			rlog.LogKeyUnderlayError: err,
+		})
+		return
+	}
+	rlog.Info("Fetch all cluster list success", map[string]interface{}{})
+	repBody := utils.JavaFastJsonConvert(string(response.Body))
+	err = json.Unmarshal([]byte(repBody), clusterListInfo)
+	return
 }
 
 // CreateTopic create topic.
