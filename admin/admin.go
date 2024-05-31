@@ -40,6 +40,7 @@ type Admin interface {
 	//GetBrokerClusterInfo(ctx context.Context) (*remote.RemotingCommand, error)
 	FetchClusterListInfo(ctx context.Context) (*ClusterListInfo, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
+	FetchAllTopicConfig(ctx context.Context, brokerAddr string) (*AllTopicConfig, error)
 	Close() error
 }
 
@@ -296,4 +297,19 @@ func (a *admin) Close() error {
 		a.cli.Shutdown()
 	})
 	return nil
+}
+
+func (a *admin) FetchAllTopicConfig(ctx context.Context, brokerAddr string) (allTopicConfigList *AllTopicConfig, err error) {
+	allTopicConfigList = new(AllTopicConfig)
+	cmd := remote.NewRemotingCommand(internal.ReqGetAllTopicConfig, nil, nil)
+	response, err := a.cli.InvokeSync(ctx, brokerAddr, cmd, 20*time.Second)
+	if err != nil {
+		rlog.Error("Fetch all cluster list error", map[string]interface{}{
+			rlog.LogKeyUnderlayError: err,
+		})
+		return
+	}
+	rlog.Info("Fetch all cluster list success", map[string]interface{}{})
+	err = json.Unmarshal(response.Body, allTopicConfigList)
+	return
 }

@@ -97,3 +97,18 @@ type ClusterListInfo struct {
 	BrokerAddrTable  map[string]BrokerAddrTable `json:"brokerAddrTable"`
 	ClusterAddrTable map[string][]string        `json:"clusterAddrTable"`
 }
+
+type AllTopicConfig struct {
+	DataVersion      *DataVersion            `json:"dataVersion"`
+	TopicConfigTable map[string]*TopicConfig `json:"topicConfigTable"`
+}
+
+type TopicConfig struct {
+	Order           bool   `json:"order"`
+	Perm            int    `json:"perm"`
+	ReadQueueNums   int    `json:"readQueueNums"`
+	TopicFilterType string `json:"topicFilterType"`
+	TopicName       string `json:"topicName"`
+	TopicSysFlag    int    `json:"topicSysFlag"`
+	WriteQueueNums  int    `json:"writeQueueNums"`
+}
