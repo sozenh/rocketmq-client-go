@@ -173,7 +173,9 @@ func (a *admin) FetchClusterListInfo(ctx context.Context) (clusterListInfo *Clus
 		})
 		return
 	}
-	rlog.Info("Fetch all cluster list success", map[string]interface{}{})
+	rlog.Info("Fetch all cluster list success", map[string]interface{}{
+		"resbody": string(response.Body),
+	})
 	repBody := utils.JavaFastJsonConvert(string(response.Body))
 	err = json.Unmarshal([]byte(repBody), clusterListInfo)
 	return
@@ -309,7 +311,9 @@ func (a *admin) FetchAllTopicConfig(ctx context.Context, brokerAddr string) (all
 		})
 		return
 	}
-	rlog.Info("Fetch all cluster list success", map[string]interface{}{})
+	rlog.Info("Fetch all cluster list success", map[string]interface{}{
+		"all_topic_config_list": string(response.Body),
+	})
 	err = json.Unmarshal(response.Body, allTopicConfigList)
 	return
 }
