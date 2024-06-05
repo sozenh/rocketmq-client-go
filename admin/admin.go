@@ -38,9 +38,10 @@ type Admin interface {
 	GetAllSubscriptionGroup(ctx context.Context, brokerAddr string, timeoutMillis time.Duration) (*SubscriptionGroupWrapper, error)
 	FetchAllTopicList(ctx context.Context) (*TopicList, error)
 	//GetBrokerClusterInfo(ctx context.Context) (*remote.RemotingCommand, error)
-	FetchClusterListInfo(ctx context.Context) (*ClusterListInfo, error)
+	FetchClusterInfo(ctx context.Context) (*ClusterInfo, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
 	FetchAllTopicConfig(ctx context.Context, brokerAddr string) (*AllTopicConfig, error)
+	UpdateBrokerConfig(ctx context.Context, cnf string) (bool, error)
 	Close() error
 }
 
@@ -163,8 +164,8 @@ func (a *admin) FetchAllTopicList(ctx context.Context) (*TopicList, error) {
 	return &topicList, nil
 }
 
-func (a *admin) FetchClusterListInfo(ctx context.Context) (clusterListInfo *ClusterListInfo, err error) {
-	clusterListInfo = new(ClusterListInfo)
+func (a *admin) FetchClusterInfo(ctx context.Context) (clusterInfo *ClusterInfo, err error) {
+	clusterInfo = new(ClusterInfo)
 	cmd := remote.NewRemotingCommand(internal.ReqGetBrokerClusterInfo, nil, nil)
 	response, err := a.cli.InvokeSync(ctx, a.cli.GetNameSrv().AddrList()[0], cmd, 3*time.Second)
 	if err != nil {
@@ -177,7 +178,7 @@ func (a *admin) FetchClusterListInfo(ctx context.Context) (clusterListInfo *Clus
 		"resbody": string(response.Body),
 	})
 	repBody := utils.JavaFastJsonConvert(string(response.Body))
-	err = json.Unmarshal([]byte(repBody), clusterListInfo)
+	err = json.Unmarshal([]byte(repBody), clusterInfo)
 	return
 }
 
@@ -315,5 +316,65 @@ func (a *admin) FetchAllTopicConfig(ctx context.Context, brokerAddr string) (all
 		"all_topic_config_list": string(response.Body),
 	})
 	err = json.Unmarshal(response.Body, allTopicConfigList)
+	return
+}
+
+func (a *admin) UpdateBrokerConfig(ctx context.Context, cnf string) (updateRes bool, err error) {
+	var cfBody = []byte(cnf)
+	var clusterInfo *ClusterInfo
+	if clusterInfo, err = a.FetchClusterInfo(ctx); err != nil {
+		rlog.Error("get cluster info error", map[string]interface{}{
+			rlog.LogKeyUnderlayError: err,
+		})
+	}
+	a.cli.RegisterACL()
+	for brokerName, brokeTable := range clusterInfo.BrokerAddrTable {
+		brokerMasterAddrList := make([]string, 0)
+		brokerSlaveAddrList := make([]string, 0)
+		for k, brokerAddr := range brokeTable.BrokerAddrs {
+			if k == "0" {
+				brokerMasterAddrList = append(brokerMasterAddrList, brokerAddr)
+				continue
+			}
+			brokerSlaveAddrList = append(brokerSlaveAddrList, brokerAddr)
+		}
+		if updateRes, err = a.updateBrokerConfig(ctx, cfBody, brokerMasterAddrList, brokerName, true); err != nil {
+			return
+		}
+		if updateRes, err = a.updateBrokerConfig(ctx, cfBody, brokerSlaveAddrList, brokerName, false); err != nil {
+			return
+		}
+	}
+	updateRes = true
+	return
+}
+
+func (a *admin) updateBrokerConfig(ctx context.Context, cfBody []byte, brokerAddrList []string, brokerName string, isMaster bool) (updateRes bool, err error) {
+	for _, brokerAddr := range brokerAddrList {
+		var response *remote.RemotingCommand
+		cmd := remote.NewRemotingCommand(internal.UpdateBrokerConfig, nil, cfBody)
+		response, err = a.cli.InvokeSync(ctx, brokerAddr, cmd, 20*time.Second)
+		if err != nil {
+			rlog.Error("update broker config error", map[string]interface{}{
+				rlog.LogKeyUnderlayError: err,
+				"brokerName":             brokerName,
+				"brokerAddr":             brokerAddr,
+			})
+			return
+		}
+		if response.Code != internal.ResSuccess {
+			rlog.Error("update broker config error", map[string]interface{}{
+				"brokerName": brokerName,
+				"brokerAddr": brokerAddr,
+				"response":   response,
+			})
+			err = fmt.Errorf("update broker config error, response %v", response)
+			return
+		}
+		rlog.Info("update config success", map[string]interface{}{
+			"brokerName": brokerName,
+			"brokerAddr": brokerAddr,
+		})
+	}
 	return
 }

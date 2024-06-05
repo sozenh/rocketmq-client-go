@@ -93,7 +93,7 @@ type BrokerAddrTable struct {
 	Cluster     string            `json:"cluster"`
 }
 
-type ClusterListInfo struct {
+type ClusterInfo struct {
 	BrokerAddrTable  map[string]BrokerAddrTable `json:"brokerAddrTable"`
 	ClusterAddrTable map[string][]string        `json:"clusterAddrTable"`
 }

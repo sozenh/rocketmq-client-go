@@ -28,20 +28,25 @@ import (
 
 func main() {
 	//clusterName := "DefaultCluster"
-	nameSrvAddr := []string{"10.10.88.152:9876"}
-	brokerAddr := "127.0.0.1:10911"
+	nameSrvAddr := []string{"10.10.88.243:27852"}
 
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{
 			AccessKey: "rocketAdmin",
-			SecretKey: "DX01PFQTH748KMS4LW6OMMTJ4EUY",
+			SecretKey: "BHZ1P97DUI4JEO1XU2ZLCE9OG6JV",
 		}),
 	)
-	res, _ := testAdmin.FetchClusterListInfo(context.Background())
+	// res, _ := testAdmin.FetchClusterInfo(context.Background())
+	// fmt.Println(res)
 
-	fmt.Println(res)
+	ures, err := testAdmin.UpdateBrokerConfig(context.Background(), "fileReservedTime=16")
 
+	fmt.Println(ures)
+	fmt.Println(err)
+
+	return
+	brokerAddr := "10.10.88.243:123"
 	// group list
 	result, err := testAdmin.GetAllSubscriptionGroup(context.Background(), brokerAddr, 3*time.Second)
 	if err != nil {
