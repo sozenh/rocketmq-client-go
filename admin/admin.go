@@ -41,7 +41,8 @@ type Admin interface {
 	FetchClusterInfo(ctx context.Context) (*ClusterInfo, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
 	FetchAllTopicConfig(ctx context.Context, brokerAddr string) (*AllTopicConfig, error)
-	UpdateBrokerConfig(ctx context.Context, cnf string) (bool, error)
+	UpdateBrokerConfig(ctx context.Context, key, value string) (bool, error)
+	UpdateAclConfig(ctx context.Context, aclConfig *internal.UpdateAclConfigRequestHeader) (bool, error)
 	Close() error
 }
 
@@ -319,8 +320,8 @@ func (a *admin) FetchAllTopicConfig(ctx context.Context, brokerAddr string) (all
 	return
 }
 
-func (a *admin) UpdateBrokerConfig(ctx context.Context, cnf string) (updateRes bool, err error) {
-	var cfBody = []byte(cnf)
+func (a *admin) UpdateBrokerConfig(ctx context.Context, key, value string) (updateRes bool, err error) {
+	var cfBody = []byte(fmt.Sprintf("%s=%s", key, value))
 	var clusterInfo *ClusterInfo
 	if clusterInfo, err = a.FetchClusterInfo(ctx); err != nil {
 		rlog.Error("get cluster info error", map[string]interface{}{
@@ -329,19 +330,11 @@ func (a *admin) UpdateBrokerConfig(ctx context.Context, cnf string) (updateRes b
 	}
 	a.cli.RegisterACL()
 	for brokerName, brokeTable := range clusterInfo.BrokerAddrTable {
-		brokerMasterAddrList := make([]string, 0)
-		brokerSlaveAddrList := make([]string, 0)
-		for k, brokerAddr := range brokeTable.BrokerAddrs {
-			if k == "0" {
-				brokerMasterAddrList = append(brokerMasterAddrList, brokerAddr)
-				continue
-			}
-			brokerSlaveAddrList = append(brokerSlaveAddrList, brokerAddr)
+		brokerAddrList := make([]string, 0)
+		for _, brokerAddr := range brokeTable.BrokerAddrs {
+			brokerAddrList = append(brokerAddrList, brokerAddr)
 		}
-		if updateRes, err = a.updateBrokerConfig(ctx, cfBody, brokerMasterAddrList, brokerName, true); err != nil {
-			return
-		}
-		if updateRes, err = a.updateBrokerConfig(ctx, cfBody, brokerSlaveAddrList, brokerName, false); err != nil {
+		if updateRes, err = a.updateBrokerConfig(ctx, internal.UpdateBrokerConfig, nil, cfBody, brokerAddrList, brokerName); err != nil {
 			return
 		}
 	}
@@ -349,10 +342,14 @@ func (a *admin) UpdateBrokerConfig(ctx context.Context, cnf string) (updateRes b
 	return
 }
 
-func (a *admin) updateBrokerConfig(ctx context.Context, cfBody []byte, brokerAddrList []string, brokerName string, isMaster bool) (updateRes bool, err error) {
+func (a *admin) updateBrokerConfig(ctx context.Context, reqCode int16,
+	header remote.CustomHeader, cfBody []byte,
+	brokerAddrList []string,
+	brokerName string,
+) (updateRes bool, err error) {
 	for _, brokerAddr := range brokerAddrList {
 		var response *remote.RemotingCommand
-		cmd := remote.NewRemotingCommand(internal.UpdateBrokerConfig, nil, cfBody)
+		cmd := remote.NewRemotingCommand(reqCode, header, cfBody)
 		response, err = a.cli.InvokeSync(ctx, brokerAddr, cmd, 20*time.Second)
 		if err != nil {
 			rlog.Error("update broker config error", map[string]interface{}{
@@ -376,5 +373,26 @@ func (a *admin) updateBrokerConfig(ctx context.Context, cfBody []byte, brokerAdd
 			"brokerAddr": brokerAddr,
 		})
 	}
+	return
+}
+
+func (a *admin) UpdateAclConfig(ctx context.Context, aclConfig *internal.UpdateAclConfigRequestHeader) (updateRes bool, err error) {
+	var clusterInfo *ClusterInfo
+	if clusterInfo, err = a.FetchClusterInfo(ctx); err != nil {
+		rlog.Error("get cluster info error", map[string]interface{}{
+			rlog.LogKeyUnderlayError: err,
+		})
+	}
+	a.cli.RegisterACL()
+	for brokerName, brokeTable := range clusterInfo.BrokerAddrTable {
+		brokerAddrList := make([]string, 0)
+		for _, brokerAddr := range brokeTable.BrokerAddrs {
+			brokerAddrList = append(brokerAddrList, brokerAddr)
+		}
+		if updateRes, err = a.updateBrokerConfig(ctx, internal.UpdateAndCreateAclConfig, aclConfig, nil, brokerAddrList, brokerName); err != nil {
+			return
+		}
+	}
+	updateRes = true
 	return
 }

@@ -404,6 +404,30 @@ func (request *CreateTopicRequestHeader) Encode() map[string]string {
 	return maps
 }
 
+type UpdateAclConfigRequestHeader struct {
+	AccessKey          string
+	SecretKey          string
+	WhiteRemoteAddress string
+	DefaultTopicPerm   string
+	DefaultGroupPerm   string
+	Admin              string
+	TopicPerms         string //topicA=DENY,topicB=PUB|SUB,topicC=SUB
+	GroupPerms         string //groupA=DENY,groupB=PUB|SUB,groupC=SUB
+}
+
+func (request *UpdateAclConfigRequestHeader) Encode() map[string]string {
+	maps := make(map[string]string)
+	maps["accessKey"] = request.AccessKey
+	maps["secretKey"] = request.SecretKey
+	maps["whiteRemoteAddress"] = request.WhiteRemoteAddress
+	maps["defaultTopicPerm"] = request.DefaultTopicPerm
+	maps["defaultGroupPerm"] = request.DefaultGroupPerm
+	maps["admin"] = request.Admin
+	maps["topicPerms"] = request.TopicPerms
+	maps["groupPerms"] = request.GroupPerms
+	return maps
+}
+
 type TopicListRequestHeader struct {
 	Topic string
 }

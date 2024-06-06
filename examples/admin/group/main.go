@@ -23,30 +23,45 @@ import (
 	"time"
 
 	"github.com/apache/rocketmq-client-go/v2/admin"
+	"github.com/apache/rocketmq-client-go/v2/internal"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
 )
 
 func main() {
 	//clusterName := "DefaultCluster"
-	nameSrvAddr := []string{"10.10.88.243:27852"}
-
+	// nameSrvAddr := []string{"10.10.88.243:27852"}
+	nameSrvAddr := []string{"10.10.88.152:9876"}
+	// rocketmq-7b98698f-0 0:10.10.88.243:25035
+	brokerAddr := "10.10.88.243:25035"
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{
-			AccessKey: "rocketAdmin",
-			SecretKey: "BHZ1P97DUI4JEO1XU2ZLCE9OG6JV",
+			// AccessKey: "rocketAdmin",
+			AccessKey: "rocketmq2",
+			// SecretKey: "BHZ1P97DUI4JEO1XU2ZLCE9OG6JV",
+			SecretKey: "12345678",
 		}),
 	)
 	// res, _ := testAdmin.FetchClusterInfo(context.Background())
 	// fmt.Println(res)
 
-	ures, err := testAdmin.UpdateBrokerConfig(context.Background(), "fileReservedTime=16")
+	// ures, err := testAdmin.UpdateBrokerConfig(context.Background(), "fileReservedTime", "16")
+	// fmt.Println(ures)
+	// fmt.Println(err)
 
-	fmt.Println(ures)
-	fmt.Println(err)
+	aclRes, err := testAdmin.UpdateAclConfig(context.Background(), &internal.UpdateAclConfigRequestHeader{
+		AccessKey:          "gxltest0001",
+		SecretKey:          "TtestPSHHSHHAJKSHKJAHSK",
+		WhiteRemoteAddress: "",
+		DefaultTopicPerm:   "PUB",
+		DefaultGroupPerm:   "PUB",
+		Admin:              "false",
+		TopicPerms:         "ddddxxxx=DENY,topictest=PUB",
+		GroupPerms:         "ggggxxxx=DENY,grouptest=PUB",
+	})
+	fmt.Println(aclRes, err)
 
 	return
-	brokerAddr := "10.10.88.243:123"
 	// group list
 	result, err := testAdmin.GetAllSubscriptionGroup(context.Background(), brokerAddr, 3*time.Second)
 	if err != nil {
