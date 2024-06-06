@@ -428,6 +428,16 @@ func (request *UpdateAclConfigRequestHeader) Encode() map[string]string {
 	return maps
 }
 
+type DeleteAclConfigRequestHeader struct {
+	AccessKey string
+}
+
+func (request *DeleteAclConfigRequestHeader) Encode() map[string]string {
+	maps := make(map[string]string)
+	maps["accessKey"] = request.AccessKey
+	return maps
+}
+
 type TopicListRequestHeader struct {
 	Topic string
 }

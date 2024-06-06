@@ -23,23 +23,22 @@ import (
 	"time"
 
 	"github.com/apache/rocketmq-client-go/v2/admin"
-	"github.com/apache/rocketmq-client-go/v2/internal"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
 )
 
 func main() {
 	//clusterName := "DefaultCluster"
-	// nameSrvAddr := []string{"10.10.88.243:27852"}
-	nameSrvAddr := []string{"10.10.88.152:9876"}
+	nameSrvAddr := []string{"10.10.88.243:26875"}
+	// nameSrvAddr := []string{"10.10.88.152:9876"}
 	// rocketmq-7b98698f-0 0:10.10.88.243:25035
 	brokerAddr := "10.10.88.243:25035"
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{
-			// AccessKey: "rocketAdmin",
-			AccessKey: "rocketmq2",
-			// SecretKey: "BHZ1P97DUI4JEO1XU2ZLCE9OG6JV",
-			SecretKey: "12345678",
+			AccessKey: "rocketAdmin",
+			// AccessKey: "rocketmq2",
+			SecretKey: "6DQLYI8Q0R7ZDVT6DLGAV1F2RHK9",
+			// SecretKey: "12345678",
 		}),
 	)
 	// res, _ := testAdmin.FetchClusterInfo(context.Background())
@@ -48,18 +47,22 @@ func main() {
 	// ures, err := testAdmin.UpdateBrokerConfig(context.Background(), "fileReservedTime", "16")
 	// fmt.Println(ures)
 	// fmt.Println(err)
+	cfg := []admin.AclFuncOption{
+		admin.WithAccessKey("gxltest0001"),
+		admin.WithSecretKey("TtestPSHHSHHAJKSHKJAHSK"),
+		admin.WithWhiteRemoteAddress(""),
+		admin.WithDefaultTopicPerm("PUB|SUB"),
+		admin.WithDefaultGroupPerm("PUB|SUB"),
+		admin.WithAdmin("false"),
+		admin.WithTopicPerms("topicA=DENY,topicB=PUB|SUB,topicC=SUB"),
+		admin.WithGroupPerms("groupA=DENY,groupB=PUB|SUB,groupC=SUB"),
+	}
 
-	aclRes, err := testAdmin.UpdateAclConfig(context.Background(), &internal.UpdateAclConfigRequestHeader{
-		AccessKey:          "gxltest0001",
-		SecretKey:          "TtestPSHHSHHAJKSHKJAHSK",
-		WhiteRemoteAddress: "",
-		DefaultTopicPerm:   "PUB",
-		DefaultGroupPerm:   "PUB",
-		Admin:              "false",
-		TopicPerms:         "ddddxxxx=DENY,topictest=PUB",
-		GroupPerms:         "ggggxxxx=DENY,grouptest=PUB",
-	})
-	fmt.Println(aclRes, err)
+	err = testAdmin.UpdateAclConfig(context.Background(), cfg...)
+	fmt.Println(err)
+
+	err = testAdmin.DeleteAclConfig(context.Background(), "gxltest0001")
+	fmt.Println(err)
 
 	return
 	// group list

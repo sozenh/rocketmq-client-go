@@ -41,8 +41,9 @@ type Admin interface {
 	FetchClusterInfo(ctx context.Context) (*ClusterInfo, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
 	FetchAllTopicConfig(ctx context.Context, brokerAddr string) (*AllTopicConfig, error)
-	UpdateBrokerConfig(ctx context.Context, key, value string) (bool, error)
-	UpdateAclConfig(ctx context.Context, aclConfig *internal.UpdateAclConfigRequestHeader) (bool, error)
+	UpdateBrokerConfig(ctx context.Context, key, value string) error
+	UpdateAclConfig(ctx context.Context, aclFunc ...AclFuncOption) error
+	DeleteAclConfig(ctx context.Context, accessKey string) error
 	Close() error
 }
 
@@ -320,7 +321,7 @@ func (a *admin) FetchAllTopicConfig(ctx context.Context, brokerAddr string) (all
 	return
 }
 
-func (a *admin) UpdateBrokerConfig(ctx context.Context, key, value string) (updateRes bool, err error) {
+func (a *admin) UpdateBrokerConfig(ctx context.Context, key, value string) (err error) {
 	var cfBody = []byte(fmt.Sprintf("%s=%s", key, value))
 	var clusterInfo *ClusterInfo
 	if clusterInfo, err = a.FetchClusterInfo(ctx); err != nil {
@@ -334,11 +335,10 @@ func (a *admin) UpdateBrokerConfig(ctx context.Context, key, value string) (upda
 		for _, brokerAddr := range brokeTable.BrokerAddrs {
 			brokerAddrList = append(brokerAddrList, brokerAddr)
 		}
-		if updateRes, err = a.updateBrokerConfig(ctx, internal.UpdateBrokerConfig, nil, cfBody, brokerAddrList, brokerName); err != nil {
+		if err = a.updateBrokerConfig(ctx, internal.UpdateBrokerConfig, nil, cfBody, brokerAddrList, brokerName); err != nil {
 			return
 		}
 	}
-	updateRes = true
 	return
 }
 
@@ -346,7 +346,7 @@ func (a *admin) updateBrokerConfig(ctx context.Context, reqCode int16,
 	header remote.CustomHeader, cfBody []byte,
 	brokerAddrList []string,
 	brokerName string,
-) (updateRes bool, err error) {
+) (err error) {
 	for _, brokerAddr := range brokerAddrList {
 		var response *remote.RemotingCommand
 		cmd := remote.NewRemotingCommand(reqCode, header, cfBody)
@@ -376,8 +376,19 @@ func (a *admin) updateBrokerConfig(ctx context.Context, reqCode int16,
 	return
 }
 
-func (a *admin) UpdateAclConfig(ctx context.Context, aclConfig *internal.UpdateAclConfigRequestHeader) (updateRes bool, err error) {
+func (a *admin) UpdateAclConfig(ctx context.Context, aclFunc ...AclFuncOption) (err error) {
 	var clusterInfo *ClusterInfo
+	aclConf := NewAclConfig(aclFunc...)
+	aclConfig := &internal.UpdateAclConfigRequestHeader{
+		AccessKey:          aclConf.AccessKey,
+		SecretKey:          aclConf.SecretKey,
+		WhiteRemoteAddress: aclConf.WhiteRemoteAddress,
+		DefaultTopicPerm:   aclConf.DefaultTopicPerm,
+		DefaultGroupPerm:   aclConf.DefaultGroupPerm,
+		Admin:              aclConf.Admin,
+		TopicPerms:         aclConf.TopicPerms,
+		GroupPerms:         aclConf.GroupPerms,
+	}
 	if clusterInfo, err = a.FetchClusterInfo(ctx); err != nil {
 		rlog.Error("get cluster info error", map[string]interface{}{
 			rlog.LogKeyUnderlayError: err,
@@ -389,10 +400,32 @@ func (a *admin) UpdateAclConfig(ctx context.Context, aclConfig *internal.UpdateA
 		for _, brokerAddr := range brokeTable.BrokerAddrs {
 			brokerAddrList = append(brokerAddrList, brokerAddr)
 		}
-		if updateRes, err = a.updateBrokerConfig(ctx, internal.UpdateAndCreateAclConfig, aclConfig, nil, brokerAddrList, brokerName); err != nil {
+		if err = a.updateBrokerConfig(ctx, internal.UpdateAndCreateAclConfig, aclConfig, nil, brokerAddrList, brokerName); err != nil {
 			return
 		}
 	}
-	updateRes = true
+	return
+}
+
+func (a *admin) DeleteAclConfig(ctx context.Context, accessKey string) (err error) {
+	var clusterInfo *ClusterInfo
+	aclConfig := &internal.DeleteAclConfigRequestHeader{
+		AccessKey: accessKey,
+	}
+	if clusterInfo, err = a.FetchClusterInfo(ctx); err != nil {
+		rlog.Error("get cluster info error", map[string]interface{}{
+			rlog.LogKeyUnderlayError: err,
+		})
+	}
+	a.cli.RegisterACL()
+	for brokerName, brokeTable := range clusterInfo.BrokerAddrTable {
+		brokerAddrList := make([]string, 0)
+		for _, brokerAddr := range brokeTable.BrokerAddrs {
+			brokerAddrList = append(brokerAddrList, brokerAddr)
+		}
+		if err = a.updateBrokerConfig(ctx, internal.DeleteAclConfig, aclConfig, nil, brokerAddrList, brokerName); err != nil {
+			return
+		}
+	}
 	return
 }

@@ -129,3 +129,74 @@ func WithNameSrvAddr(NameSrvAddr []string) OptionDelete {
 		opts.NameSrvAddr = NameSrvAddr
 	}
 }
+
+type AclFuncOption func(*AclConfig)
+
+type AclConfig struct {
+	AccessKey          string
+	SecretKey          string
+	WhiteRemoteAddress string
+	DefaultTopicPerm   string
+	DefaultGroupPerm   string
+	Admin              string
+	TopicPerms         string //topicA=DENY,topicB=PUB|SUB,topicC=SUB
+	GroupPerms         string //groupA=DENY,groupB=PUB|SUB,groupC=SUB
+}
+
+func WithAccessKey(accessKey string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.AccessKey = accessKey
+	}
+}
+
+func WithSecretKey(secretKey string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.SecretKey = secretKey
+	}
+}
+
+func WithWhiteRemoteAddress(whiteRemoteAddress string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.WhiteRemoteAddress = whiteRemoteAddress
+	}
+}
+
+func WithDefaultTopicPerm(defaultTopicPerm string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.DefaultTopicPerm = defaultTopicPerm
+	}
+}
+
+func WithDefaultGroupPerm(defaultGroupPerm string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.DefaultGroupPerm = defaultGroupPerm
+	}
+}
+
+func WithAdmin(admin string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.Admin = admin
+	}
+}
+
+func WithTopicPerms(topicPerms string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.TopicPerms = topicPerms
+	}
+}
+
+func WithGroupPerms(groupPerms string) AclFuncOption {
+	return func(cfg *AclConfig) {
+		cfg.GroupPerms = groupPerms
+	}
+}
+
+func NewAclConfig(opts ...AclFuncOption) *AclConfig {
+	cfg := &AclConfig{}
+
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	return cfg
+}
