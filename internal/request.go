@@ -46,6 +46,8 @@ const (
 	UpdateAndCreateAclConfig         = int16(50)
 	DeleteAclConfig                  = int16(51)
 	GetBrokerClusterAclConfig        = int16(54)
+	PutKVConfig                      = int16(100)
+	GetKVConfig                      = int16(101)
 	ReqGetRouteInfoByTopic           = int16(105)
 	ReqGetBrokerClusterInfo          = int16(106)
 	ReqSendBatchMessage              = int16(320)
@@ -435,6 +437,20 @@ type DeleteAclConfigRequestHeader struct {
 func (request *DeleteAclConfigRequestHeader) Encode() map[string]string {
 	maps := make(map[string]string)
 	maps["accessKey"] = request.AccessKey
+	return maps
+}
+
+type PutKVOrderConfigRequestHeader struct {
+	Namespace string
+	Key       string
+	Value     string
+}
+
+func (request *PutKVOrderConfigRequestHeader) Encode() map[string]string {
+	maps := make(map[string]string)
+	maps["namespace"] = request.Namespace
+	maps["key"] = request.Key
+	maps["value"] = request.Value
 	return maps
 }
 

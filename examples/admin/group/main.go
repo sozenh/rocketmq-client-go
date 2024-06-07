@@ -31,7 +31,7 @@ func main() {
 	nameSrvAddr := []string{"10.10.88.243:26875"}
 	// nameSrvAddr := []string{"10.10.88.152:9876"}
 	// rocketmq-7b98698f-0 0:10.10.88.243:25035
-	brokerAddr := "10.10.88.243:25035"
+	brokerAddr := "10.10.88.243:25011"
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{

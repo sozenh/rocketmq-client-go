@@ -26,33 +26,39 @@ import (
 )
 
 func main() {
-	topic := "newOne"
+	topic := "mmmmmmbaaaaxxxxx"
 	//clusterName := "DefaultCluster"
-	nameSrvAddr := []string{"10.10.88.152:9876"}
-	brokerAddr := "10.10.88.152:10911"
-
+	nameSrvAddr := []string{"10.10.88.243:26875"}
+	brokerAddr := "10.10.88.243:25011"
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{
-			AccessKey: "rocketmq2",
-			SecretKey: "12345678",
+			AccessKey: "rocketAdmin",
+			SecretKey: "6DQLYI8Q0R7ZDVT6DLGAV1F2RHK9",
 		}),
 	)
-
-	// get all topic config
-	res, err := testAdmin.FetchAllTopicConfig(context.Background(), brokerAddr)
-	fmt.Println("all topic config: ", res)
 
 	//create topic
 	err = testAdmin.CreateTopic(
 		context.Background(),
 		admin.WithTopicCreate(topic),
+		admin.WithOrder(true),
+		admin.WithWriteQueueNums(8),
 		admin.WithBrokerAddrCreate(brokerAddr),
 	)
 	if err != nil {
 		fmt.Println("Create topic error:", err.Error())
 	}
 
+	// set order kvconfig
+	err = testAdmin.PutOrderKVConfig(context.Background(), "mmmmmmbaaaaxxxxx", "rocketmq-2a597b8d-0:8")
+	if err != nil {
+		fmt.Println("set order kvconfig error:", err.Error())
+	}
+	// get all topic config
+	res, err := testAdmin.FetchAllTopicConfig(context.Background(), brokerAddr)
+	fmt.Println("all topic config: ", res)
+	return
 	// topic list
 	result, err := testAdmin.FetchAllTopicList(context.Background())
 	if err != nil {

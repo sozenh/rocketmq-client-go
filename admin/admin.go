@@ -44,6 +44,7 @@ type Admin interface {
 	UpdateBrokerConfig(ctx context.Context, key, value string) error
 	UpdateAclConfig(ctx context.Context, aclFunc ...AclFuncOption) error
 	DeleteAclConfig(ctx context.Context, accessKey string) error
+	PutOrderKVConfig(ctx context.Context, key, value string) error
 	Close() error
 }
 
@@ -176,9 +177,7 @@ func (a *admin) FetchClusterInfo(ctx context.Context) (clusterInfo *ClusterInfo,
 		})
 		return
 	}
-	rlog.Info("Fetch all cluster list success", map[string]interface{}{
-		"resbody": string(response.Body),
-	})
+	rlog.Info("Fetch all cluster list success", map[string]interface{}{})
 	repBody := utils.JavaFastJsonConvert(string(response.Body))
 	err = json.Unmarshal([]byte(repBody), clusterInfo)
 	return
@@ -202,7 +201,7 @@ func (a *admin) CreateTopic(ctx context.Context, opts ...OptionCreate) error {
 		TopicSysFlag:    cfg.TopicSysFlag,
 		Order:           cfg.Order,
 	}
-
+	a.cli.RegisterACL()
 	cmd := remote.NewRemotingCommand(internal.ReqCreateTopic, request, nil)
 	_, err := a.cli.InvokeSync(ctx, cfg.BrokerAddr, cmd, 5*time.Second)
 	if err != nil {
@@ -306,17 +305,24 @@ func (a *admin) Close() error {
 
 func (a *admin) FetchAllTopicConfig(ctx context.Context, brokerAddr string) (allTopicConfigList *AllTopicConfig, err error) {
 	allTopicConfigList = new(AllTopicConfig)
+	a.cli.RegisterACL()
 	cmd := remote.NewRemotingCommand(internal.ReqGetAllTopicConfig, nil, nil)
 	response, err := a.cli.InvokeSync(ctx, brokerAddr, cmd, 20*time.Second)
 	if err != nil {
-		rlog.Error("Fetch all cluster list error", map[string]interface{}{
+		rlog.Error("fetch all topic config error", map[string]interface{}{
 			rlog.LogKeyUnderlayError: err,
 		})
 		return
 	}
-	rlog.Info("Fetch all cluster list success", map[string]interface{}{
-		"all_topic_config_list": string(response.Body),
-	})
+	if response.Code != internal.ResSuccess {
+		rlog.Error("fetch all topic config error", map[string]interface{}{
+			"response": response,
+		})
+		err = fmt.Errorf("fetch all topic config response : %v", response)
+		return
+	}
+
+	rlog.Info("fetch all topic config success", map[string]interface{}{})
 	err = json.Unmarshal(response.Body, allTopicConfigList)
 	return
 }
@@ -424,6 +430,40 @@ func (a *admin) DeleteAclConfig(ctx context.Context, accessKey string) (err erro
 			brokerAddrList = append(brokerAddrList, brokerAddr)
 		}
 		if err = a.updateBrokerConfig(ctx, internal.DeleteAclConfig, aclConfig, nil, brokerAddrList, brokerName); err != nil {
+			return
+		}
+	}
+	return
+}
+
+// isCluster false
+// key: topicName
+// value: "rocketmq-2a597b8d-0:WriteQueueNums;rocketmq-2a597b8d-1:WriteQueueNums"
+func (a *admin) PutOrderKVConfig(ctx context.Context, key, value string) (err error) {
+	var (
+		response        *remote.RemotingCommand
+		nameServerAddrs = a.opts.Resolver.Resolve()
+	)
+	a.cli.RegisterACL()
+	head := &internal.PutKVOrderConfigRequestHeader{
+		Namespace: "ORDER_TOPIC_CONFIG",
+		Key:       key,
+		Value:     value,
+	}
+	for _, nsAddr := range nameServerAddrs {
+		cmd := remote.NewRemotingCommand(internal.PutKVConfig, head, nil)
+		response, err = a.cli.InvokeSync(ctx, nsAddr, cmd, 10*time.Second)
+		if err != nil {
+			rlog.Error("set oder kv config error", map[string]interface{}{
+				rlog.LogKeyUnderlayError: err,
+			})
+			return
+		}
+		if response.Code != internal.ResSuccess {
+			rlog.Error("set oder kv config error", map[string]interface{}{
+				"response": response,
+			})
+			err = fmt.Errorf("set oder kv config error response : %v", response)
 			return
 		}
 	}
