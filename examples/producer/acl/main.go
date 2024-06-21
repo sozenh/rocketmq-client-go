@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/apache/rocketmq-client-go/v2"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
@@ -30,11 +31,11 @@ import (
 
 func main() {
 	p, err := rocketmq.NewProducer(
-		producer.WithNsResolver(primitive.NewPassthroughResolver([]string{"127.0.0.1:9876"})),
+		producer.WithNsResolver(primitive.NewPassthroughResolver([]string{"10.10.88.243:26875"})),
 		producer.WithRetry(2),
 		producer.WithCredentials(primitive.Credentials{
-			AccessKey: "RocketMQ",
-			SecretKey: "12345678",
+			AccessKey: "rocketAdmin",
+			SecretKey: "6DQLYI8Q0R7ZDVT6DLGAV1F2RHK9",
 		}),
 	)
 
@@ -57,6 +58,7 @@ func main() {
 		} else {
 			fmt.Printf("send message success: result=%s\n", res.String())
 		}
+		time.Sleep(time.Second)
 	}
 	err = p.Shutdown()
 	if err != nil {

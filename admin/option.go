@@ -17,6 +17,10 @@ limitations under the License.
 
 package admin
 
+const (
+	OrderTopicConfig = "ORDER_TOPIC_CONFIG"
+)
+
 func defaultTopicConfigCreate() TopicConfigCreate {
 	opts := TopicConfigCreate{
 		DefaultTopic:    "defaultTopic",

@@ -112,3 +112,7 @@ type TopicConfig struct {
 	TopicSysFlag    int    `json:"topicSysFlag"`
 	WriteQueueNums  int    `json:"writeQueueNums"`
 }
+
+type AllKVList struct {
+	Table map[string]string `json:"table,omitempty"`
+}

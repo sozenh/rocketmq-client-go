@@ -48,6 +48,7 @@ const (
 	GetBrokerClusterAclConfig        = int16(54)
 	PutKVConfig                      = int16(100)
 	GetKVConfig                      = int16(101)
+	DeleteKVConfig                   = int16(102)
 	ReqGetRouteInfoByTopic           = int16(105)
 	ReqGetBrokerClusterInfo          = int16(106)
 	ReqSendBatchMessage              = int16(320)
@@ -57,6 +58,7 @@ const (
 	ReqGetAllTopicListFromNameServer = int16(206)
 	ReqDeleteTopicInBroker           = int16(215)
 	ReqDeleteTopicInNameSrv          = int16(216)
+	GetKVListByNamespace             = int16(219)
 	ReqResetConsumerOffset           = int16(220)
 	ReqGetConsumerStatsFromClient    = int16(221)
 	ReqGetConsumerRunningInfo        = int16(307)
@@ -440,17 +442,21 @@ func (request *DeleteAclConfigRequestHeader) Encode() map[string]string {
 	return maps
 }
 
-type PutKVOrderConfigRequestHeader struct {
+type KVConfigRequestHeader struct {
 	Namespace string
 	Key       string
 	Value     string
 }
 
-func (request *PutKVOrderConfigRequestHeader) Encode() map[string]string {
+func (request *KVConfigRequestHeader) Encode() map[string]string {
 	maps := make(map[string]string)
 	maps["namespace"] = request.Namespace
-	maps["key"] = request.Key
-	maps["value"] = request.Value
+	if request.Key != "" {
+		maps["key"] = request.Key
+	}
+	if request.Value != "" {
+		maps["value"] = request.Value
+	}
 	return maps
 }
 

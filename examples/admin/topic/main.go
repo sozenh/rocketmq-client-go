@@ -26,30 +26,34 @@ import (
 )
 
 func main() {
-	topic := "mmmmmmbaaaaxxxxx"
+	topic := "gongxuleitest"
 	//clusterName := "DefaultCluster"
-	nameSrvAddr := []string{"10.10.88.243:26875"}
-	brokerAddr := "10.10.88.243:25011"
+	nameSrvAddr := []string{"10.10.88.243:25850"}
+	brokerAddr := "10.10.88.243:25002"
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{
 			AccessKey: "rocketAdmin",
-			SecretKey: "6DQLYI8Q0R7ZDVT6DLGAV1F2RHK9",
+			SecretKey: "PUKC2HEY7XUB92J68WVAOU67FTXL",
 		}),
 	)
 
 	//create topic
-	err = testAdmin.CreateTopic(
-		context.Background(),
-		admin.WithTopicCreate(topic),
-		admin.WithOrder(true),
-		admin.WithWriteQueueNums(8),
-		admin.WithBrokerAddrCreate(brokerAddr),
-	)
+	// err = testAdmin.CreateTopic(
+	// 	context.Background(),
+	// 	admin.WithTopicCreate(topic),
+	// 	admin.WithOrder(true),
+	// 	admin.WithWriteQueueNums(8),
+	// 	admin.WithBrokerAddrCreate(brokerAddr),
+	// )
 	if err != nil {
 		fmt.Println("Create topic error:", err.Error())
 	}
 
+	fmt.Println(testAdmin.GetKVListByNamespace(context.Background(), "ORDER_TOPIC_CONFIG"))
+	fmt.Println(testAdmin.DeleteOrderKVConfig(context.Background(), topic))
+
+	return
 	// set order kvconfig
 	err = testAdmin.PutOrderKVConfig(context.Background(), "mmmmmmbaaaaxxxxx", "rocketmq-2a597b8d-0:8")
 	if err != nil {

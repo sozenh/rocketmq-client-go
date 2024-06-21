@@ -45,6 +45,9 @@ type Admin interface {
 	UpdateAclConfig(ctx context.Context, aclFunc ...AclFuncOption) error
 	DeleteAclConfig(ctx context.Context, accessKey string) error
 	PutOrderKVConfig(ctx context.Context, key, value string) error
+	GetOrderKVConfig(ctx context.Context, key string) (val string, err error)
+	DeleteOrderKVConfig(ctx context.Context, key string) (err error)
+	GetKVListByNamespace(ctx context.Context, namespace string) (kvList *AllKVList, err error)
 	Close() error
 }
 
@@ -440,13 +443,62 @@ func (a *admin) DeleteAclConfig(ctx context.Context, accessKey string) (err erro
 // key: topicName
 // value: "rocketmq-2a597b8d-0:WriteQueueNums;rocketmq-2a597b8d-1:WriteQueueNums"
 func (a *admin) PutOrderKVConfig(ctx context.Context, key, value string) (err error) {
+	return a.putKVConfig(ctx, key, value, OrderTopicConfig)
+}
+
+func (a *admin) GetOrderKVConfig(ctx context.Context, key string) (val string, err error) {
+	return a.getKVConfig(ctx, key, OrderTopicConfig)
+}
+
+func (a *admin) DeleteOrderKVConfig(ctx context.Context, key string) (err error) {
+	return a.deleteKVConfig(ctx, key, OrderTopicConfig)
+}
+
+func (a *admin) GetKVListByNamespace(ctx context.Context, namespace string) (kvList *AllKVList, err error) {
+	var (
+		response        *remote.RemotingCommand
+		nameServerAddrs = a.opts.Resolver.Resolve()
+	)
+	kvList = new(AllKVList)
+	a.cli.RegisterACL()
+	head := &internal.KVConfigRequestHeader{
+		Namespace: namespace,
+	}
+
+	cmd := remote.NewRemotingCommand(internal.GetKVListByNamespace, head, nil)
+	response, err = a.cli.InvokeSync(ctx, nameServerAddrs[0], cmd, 10*time.Second)
+	if err != nil {
+		rlog.Error("get kv config error", map[string]interface{}{
+			rlog.LogKeyUnderlayError: err,
+		})
+		return
+	}
+
+	// not found
+	if response.Code == internal.ResQueryNotFound {
+		return
+	}
+
+	if response.Code != internal.ResSuccess {
+		rlog.Error("get kv config error", map[string]interface{}{
+			"response": response,
+		})
+		err = fmt.Errorf("get kv config error response : %v", response)
+		return
+	}
+	// {"table":{"Gong123123":"rocketmq-4156c457-0:1","TEst1·23123123":"rocketmq-4156c457-0:1","Gongxulei02":"rocketmq-4156c457-0:1"}}
+	err = json.Unmarshal(response.Body, kvList)
+	return
+}
+
+func (a *admin) putKVConfig(ctx context.Context, key, value, namespace string) (err error) {
 	var (
 		response        *remote.RemotingCommand
 		nameServerAddrs = a.opts.Resolver.Resolve()
 	)
 	a.cli.RegisterACL()
-	head := &internal.PutKVOrderConfigRequestHeader{
-		Namespace: "ORDER_TOPIC_CONFIG",
+	head := &internal.KVConfigRequestHeader{
+		Namespace: namespace,
 		Key:       key,
 		Value:     value,
 	}
@@ -454,16 +506,81 @@ func (a *admin) PutOrderKVConfig(ctx context.Context, key, value string) (err er
 		cmd := remote.NewRemotingCommand(internal.PutKVConfig, head, nil)
 		response, err = a.cli.InvokeSync(ctx, nsAddr, cmd, 10*time.Second)
 		if err != nil {
-			rlog.Error("set oder kv config error", map[string]interface{}{
+			rlog.Error("set kv config error", map[string]interface{}{
 				rlog.LogKeyUnderlayError: err,
 			})
 			return
 		}
 		if response.Code != internal.ResSuccess {
-			rlog.Error("set oder kv config error", map[string]interface{}{
+			rlog.Error("set kv config error", map[string]interface{}{
 				"response": response,
 			})
-			err = fmt.Errorf("set oder kv config error response : %v", response)
+			err = fmt.Errorf("set kv config error response : %v", response)
+			return
+		}
+	}
+	return
+}
+
+func (a *admin) getKVConfig(ctx context.Context, key, namespace string) (val string, err error) {
+	var (
+		response        *remote.RemotingCommand
+		nameServerAddrs = a.opts.Resolver.Resolve()
+	)
+	a.cli.RegisterACL()
+	head := &internal.KVConfigRequestHeader{
+		Namespace: namespace,
+		Key:       key,
+	}
+
+	cmd := remote.NewRemotingCommand(internal.GetKVConfig, head, nil)
+	response, err = a.cli.InvokeSync(ctx, nameServerAddrs[0], cmd, 10*time.Second)
+	if err != nil {
+		rlog.Error("get kv config error", map[string]interface{}{
+			rlog.LogKeyUnderlayError: err,
+		})
+		return
+	}
+
+	// not found
+	if response.Code == internal.ResQueryNotFound {
+		return
+	}
+	if response.Code != internal.ResSuccess {
+		rlog.Error("get kv config error", map[string]interface{}{
+			"response": response,
+		})
+		err = fmt.Errorf("get kv config error response : %v", response)
+		return
+	}
+	val = response.ExtFields["value"]
+	return
+}
+
+func (a *admin) deleteKVConfig(ctx context.Context, key, namespace string) (err error) {
+	var (
+		response        *remote.RemotingCommand
+		nameServerAddrs = a.opts.Resolver.Resolve()
+	)
+	a.cli.RegisterACL()
+	head := &internal.KVConfigRequestHeader{
+		Namespace: namespace,
+		Key:       key,
+	}
+	for _, nsAddr := range nameServerAddrs {
+		cmd := remote.NewRemotingCommand(internal.DeleteKVConfig, head, nil)
+		response, err = a.cli.InvokeSync(ctx, nsAddr, cmd, 10*time.Second)
+		if err != nil {
+			rlog.Error("delete kv config error", map[string]interface{}{
+				rlog.LogKeyUnderlayError: err,
+			})
+			return
+		}
+		if response.Code != internal.ResSuccess {
+			rlog.Error("delete kv config error", map[string]interface{}{
+				"response": response,
+			})
+			err = fmt.Errorf("delete kv config error response : %v", response)
 			return
 		}
 	}

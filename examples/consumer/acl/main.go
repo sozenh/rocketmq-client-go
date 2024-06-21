@@ -31,10 +31,10 @@ import (
 func main() {
 	c, err := rocketmq.NewPushConsumer(
 		consumer.WithGroupName("testGroup"),
-		consumer.WithNsResolver(primitive.NewPassthroughResolver([]string{"127.0.0.1:9876"})),
+		consumer.WithNsResolver(primitive.NewPassthroughResolver([]string{"10.10.88.243:26875"})),
 		consumer.WithCredentials(primitive.Credentials{
-			AccessKey: "RocketMQ",
-			SecretKey: "12345678",
+			AccessKey: "rocketAdmin",
+			SecretKey: "6DQLYI8Q0R7ZDVT6DLGAV1F2RHK9",
 		}),
 	)
 	if err != nil {
