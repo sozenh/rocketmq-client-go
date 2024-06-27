@@ -41,13 +41,19 @@ type Admin interface {
 	FetchClusterInfo(ctx context.Context) (*ClusterInfo, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
 	FetchAllTopicConfig(ctx context.Context, brokerAddr string) (*AllTopicConfig, error)
-	UpdateBrokerConfig(ctx context.Context, key, value string) error
 	UpdateAclConfig(ctx context.Context, aclFunc ...AclFuncOption) error
 	DeleteAclConfig(ctx context.Context, accessKey string) error
 	PutOrderKVConfig(ctx context.Context, key, value string) error
 	GetOrderKVConfig(ctx context.Context, key string) (val string, err error)
 	DeleteOrderKVConfig(ctx context.Context, key string) (err error)
 	GetKVListByNamespace(ctx context.Context, namespace string) (kvList *AllKVList, err error)
+
+	// for broker
+	UpdateBrokerConfig(ctx context.Context, key, value string) error
+	FetchBrokerRuntimeInfo(ctx context.Context, addr string) (map[string]string, error)
+
+	// for consumer
+
 	Close() error
 }
 

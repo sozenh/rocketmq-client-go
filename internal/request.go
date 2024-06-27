@@ -33,6 +33,7 @@ const (
 	ReqGetAllTopicConfig             = int16(21)
 	ReqGetTopicConfigList            = int16(22)
 	UpdateBrokerConfig               = int16(25)
+	ReqGetBrokerRuntimeInfo          = int16(28)
 	ReqSearchOffsetByTimestamp       = int16(29)
 	ReqGetMaxOffset                  = int16(30)
 	ReqGetMinOffset                  = int16(31)
