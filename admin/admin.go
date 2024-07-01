@@ -41,15 +41,19 @@ type Admin interface {
 	FetchClusterInfo(ctx context.Context) (*ClusterInfo, error)
 	FetchPublishMessageQueues(ctx context.Context, topic string) ([]*primitive.MessageQueue, error)
 	FetchAllTopicConfig(ctx context.Context, brokerAddr string) (*AllTopicConfig, error)
-	UpdateAclConfig(ctx context.Context, aclFunc ...AclFuncOption) error
-	DeleteAclConfig(ctx context.Context, accessKey string) error
 	PutOrderKVConfig(ctx context.Context, key, value string) error
 	GetOrderKVConfig(ctx context.Context, key string) (val string, err error)
 	DeleteOrderKVConfig(ctx context.Context, key string) (err error)
 	GetKVListByNamespace(ctx context.Context, namespace string) (kvList *AllKVList, err error)
 
+	// for acl
+	UpdateAclConfig(ctx context.Context, aclFunc ...AclFuncOption) error
+	DeleteAclConfig(ctx context.Context, accessKey string) error
+	GetBrokerClusterAclInfo(ctx context.Context, addr string) (*AclInfo, error)
+
 	// for broker
 	UpdateBrokerConfig(ctx context.Context, key, value string) error
+	GetBrokerConfig(ctx context.Context, addr string) (map[string]string, error)
 	FetchBrokerRuntimeInfo(ctx context.Context, addr string) (map[string]string, error)
 
 	// for consumer
@@ -124,6 +128,9 @@ func NewAdmin(opts ...AdminOption) (*admin, error) {
 		return nil, fmt.Errorf("GetOrNewRocketMQClient faild")
 	}
 	defaultOpts.Namesrv = cli.GetNameSrv()
+	if !defaultOpts.Credentials.IsEmpty() {
+		cli.RegisterACL()
+	}
 	//log.Printf("Client: %#v", namesrv.srvs)
 	return &admin{
 		cli:  cli,

@@ -28,13 +28,13 @@ import (
 func main() {
 	topic := "gongxuleitest"
 	//clusterName := "DefaultCluster"
-	nameSrvAddr := []string{"10.10.88.243:25850"}
-	brokerAddr := "10.10.88.243:25002"
+	nameSrvAddr := []string{"10.10.66.216:5026"}
+	brokerAddr := "10.10.66.210:1027"
 	testAdmin, err := admin.NewAdmin(
 		admin.WithResolver(primitive.NewPassthroughResolver(nameSrvAddr)),
 		admin.WithCredentials(primitive.Credentials{
-			AccessKey: "rocketAdmin",
-			SecretKey: "PUKC2HEY7XUB92J68WVAOU67FTXL",
+			AccessKey: "a0001234",
+			SecretKey: "AAAaaa123=",
 		}),
 	)
 
@@ -50,7 +50,8 @@ func main() {
 		fmt.Println("Create topic error:", err.Error())
 	}
 
-	fmt.Println(testAdmin.GetKVListByNamespace(context.Background(), "ORDER_TOPIC_CONFIG"))
+	fmt.Println(testAdmin.GetBrokerClusterAclInfo(context.Background(), brokerAddr))
+	return
 	fmt.Println(testAdmin.DeleteOrderKVConfig(context.Background(), topic))
 
 	return
