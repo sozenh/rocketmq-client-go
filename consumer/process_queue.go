@@ -20,7 +20,6 @@ package consumer
 import (
 	"strconv"
 	"sync"
-
 	"time"
 
 	"github.com/emirpasic/gods/maps/treemap"
@@ -28,9 +27,9 @@ import (
 	gods_util "github.com/emirpasic/gods/utils"
 	"go.uber.org/atomic"
 
-	"github.com/apache/rocketmq-client-go/v2/internal"
-	"github.com/apache/rocketmq-client-go/v2/primitive"
-	"github.com/apache/rocketmq-client-go/v2/rlog"
+	"github.com/sozenh/rocketmq-client-go/v2/internal"
+	"github.com/sozenh/rocketmq-client-go/v2/primitive"
+	"github.com/sozenh/rocketmq-client-go/v2/rlog"
 )
 
 const (

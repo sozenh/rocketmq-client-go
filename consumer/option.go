@@ -23,9 +23,9 @@ import (
 
 	"go.uber.org/atomic"
 
-	"github.com/apache/rocketmq-client-go/v2/hooks"
-	"github.com/apache/rocketmq-client-go/v2/internal"
-	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/sozenh/rocketmq-client-go/v2/hooks"
+	"github.com/sozenh/rocketmq-client-go/v2/internal"
+	"github.com/sozenh/rocketmq-client-go/v2/primitive"
 )
 
 type consumerOptions struct {

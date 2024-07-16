@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/apache/rocketmq-client-go/v2/consumer"
-	"github.com/apache/rocketmq-client-go/v2/primitive"
-	"github.com/apache/rocketmq-client-go/v2/producer"
+	"github.com/sozenh/rocketmq-client-go/v2/consumer"
+	"github.com/sozenh/rocketmq-client-go/v2/primitive"
+	"github.com/sozenh/rocketmq-client-go/v2/producer"
 )
 
 const (

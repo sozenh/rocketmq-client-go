@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/apache/rocketmq-client-go/v2/admin"
-	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/sozenh/rocketmq-client-go/v2/admin"
+	"github.com/sozenh/rocketmq-client-go/v2/primitive"
 )
 
 func main() {

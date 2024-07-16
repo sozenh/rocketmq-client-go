@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apache/rocketmq-client-go/v2/internal"
-	"github.com/apache/rocketmq-client-go/v2/internal/remote"
-	"github.com/apache/rocketmq-client-go/v2/internal/utils"
-	"github.com/apache/rocketmq-client-go/v2/rlog"
+	"github.com/sozenh/rocketmq-client-go/v2/internal"
+	"github.com/sozenh/rocketmq-client-go/v2/internal/remote"
+	"github.com/sozenh/rocketmq-client-go/v2/internal/utils"
+	"github.com/sozenh/rocketmq-client-go/v2/rlog"
 )
 
 func (a *admin) GetBrokerConfig(ctx context.Context, addr string) (map[string]string, error) {

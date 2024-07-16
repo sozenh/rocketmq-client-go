@@ -26,10 +26,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/apache/rocketmq-client-go/v2/errors"
-	"github.com/apache/rocketmq-client-go/v2/internal"
-	"github.com/apache/rocketmq-client-go/v2/internal/remote"
-	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/sozenh/rocketmq-client-go/v2/errors"
+	"github.com/sozenh/rocketmq-client-go/v2/internal"
+	"github.com/sozenh/rocketmq-client-go/v2/internal/remote"
+	"github.com/sozenh/rocketmq-client-go/v2/primitive"
 )
 
 func TestParseTimestamp(t *testing.T) {
